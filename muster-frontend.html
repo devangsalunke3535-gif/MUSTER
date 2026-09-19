@@ -1,0 +1,2502 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muster — Industrial Attendance & Labour Compliance Platform</title>
+  <meta name="description" content="Next-generation industrial attendance and statutory labour compliance platform for contractors in India. One-tap shift marking, real-time PF & ESI gap alerts.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              800: '#9a3412',
+              900: '#7c2d12',
+              accent: '#ff5500'
+            },
+            surface: {
+              950: '#080a0f',
+              900: '#0d111a',
+              850: '#121722',
+              800: '#182030',
+              750: '#1f283d',
+              700: '#28344e',
+              border: '#222c40',
+              borderLight: '#303e5c'
+            },
+            statutory: {
+              emerald: '#10b981',
+              emeraldBg: '#064e3b',
+              amber: '#f59e0b',
+              amberBg: '#78350f',
+              crimson: '#ef4444',
+              crimsonBg: '#7f1d1d'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          boxShadow: {
+            'glow-sm': '0 0 15px -3px rgba(249, 115, 22, 0.25)',
+            'glow-md': '0 0 30px -5px rgba(249, 115, 22, 0.35)',
+            'glow-emerald': '0 0 25px -5px rgba(16, 185, 129, 0.3)',
+            'glow-crimson': '0 0 25px -5px rgba(239, 68, 68, 0.3)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom refined industrial styling */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0d111a; }
+    ::-webkit-scrollbar-thumb { background: #222c40; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #303e5c; }
+    
+    .bg-grid-pattern {
+      background-size: 36px 36px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+    
+    .pulse-dot {
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse-emerald 2s infinite;
+    }
+    @keyframes pulse-emerald {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    
+    .tap-target {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Modal transition */
+    .modal-backdrop {
+      backdrop-filter: blur(8px);
+      transition: opacity 0.2s ease-out;
+    }
+
+    /* Tab Transition animations */
+    .tab-fade-enter {
+      animation: tabFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes tabFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Skeleton shimmer animation */
+    .skeleton-box {
+      background: linear-gradient(90deg, #182030 25%, #222c40 50%, #182030 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+    }
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+<body class="bg-surface-950 text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white min-h-screen">
+
+  <!-- ========================================================================= -->
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <!-- ========================================================================= -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full"></div>
+
+  <!-- ========================================================================= -->
+  <!-- GLOBAL HEADER -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-40 bg-surface-950/85 backdrop-blur-md border-b border-surface-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo & Brand -->
+      <div class="flex items-center gap-4">
+        <a href="#landing" onclick="switchView('landing')" class="flex items-center gap-3 group">
+          <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center font-mono font-bold text-white shadow-glow-sm group-hover:scale-105 transition-transform">
+            M
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xl font-bold tracking-tight text-white">MUSTER</span>
+              <span class="text-[10px] uppercase font-mono font-semibold tracking-wider bg-brand-500/15 text-brand-400 border border-brand-500/30 px-1.5 py-0.5 rounded">v2.5 Pro</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium leading-none hidden sm:block">Industrial Attendance &amp; Statutory Compliance</p>
+          </div>
+        </a>
+      </div>
+
+      <!-- Navigation Links (Landing Mode) -->
+      <nav id="landingNav" class="hidden md:flex items-center gap-7 text-sm font-medium text-slate-300">
+        <a href="#problem" class="hover:text-white transition-colors">The Problem</a>
+        <a href="#features" class="hover:text-white transition-colors">Features</a>
+        <a href="#vs-legacy" class="hover:text-white transition-colors">Muster vs SpineHR</a>
+        <a href="#compliance" class="hover:text-white transition-colors">Labour Laws</a>
+        <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
+      </nav>
+
+      <!-- App Mode Site Switcher & Status -->
+      <div id="appNavHeader" class="hidden items-center gap-4">
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-850 border border-surface-border text-xs">
+          <span class="text-slate-400">Site:</span>
+          <span class="font-semibold text-slate-200">Tata Steel — Jamshedpur Works</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-statutory-emerald pulse-dot ml-1"></span>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="flex items-center gap-3">
+        <!-- Live Connection Pill -->
+        <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-900 border border-surface-border text-xs font-mono">
+          <span id="backendDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+          <span id="backendStatusText" class="text-slate-400 font-medium">Connecting…</span>
+        </div>
+
+        <button id="navDemoBtn" onclick="openDemoModal()" class="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-white hover:bg-surface-800 border border-surface-border transition-all">
+          Book a Demo
+        </button>
+
+        <button id="navLaunchBtn" onclick="switchView('app', 'dashboard')" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-brand-600 to-brand-500 text-white hover:from-brand-500 hover:to-brand-400 shadow-glow-sm hover:shadow-glow-md transition-all tap-target">
+          <span>Launch App</span>
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+
+        <button id="navLandingBtn" onclick="switchView('landing')" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-surface-800 border border-surface-border transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          <span>Back to Site</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- VIEW 1: HIGH-END MARKETING LANDING PAGE -->
+  <!-- ========================================================================= -->
+  <main id="landingView" class="block">
+
+    <!-- HERO SECTION -->
+    <section class="relative pt-12 pb-20 md:pt-20 md:pb-32 overflow-hidden bg-grid-pattern border-b border-surface-border">
+      <!-- Glow ambient backdrop -->
+      <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-brand-500/10 blur-[130px] rounded-full pointer-events-none"></div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <!-- Eyebrow Pill -->
+        <div class="flex justify-center mb-6">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-850 border border-surface-borderLight text-xs font-medium text-slate-300 shadow-lg">
+            <span class="flex h-2 w-2 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+            </span>
+            <span class="text-brand-400 font-semibold uppercase tracking-wider text-[10px]">Contractor Grade</span>
+            <span class="text-slate-500">|</span>
+            <span>Zero clunky ERP menus. 100% statutory compliance.</span>
+          </div>
+        </div>
+
+        <!-- Main Headline -->
+        <div class="text-center max-w-4xl mx-auto">
+          <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1]">
+            Mark 600 workers in seconds. <br class="hidden sm:inline">
+            <span class="bg-gradient-to-r from-brand-400 via-brand-300 to-amber-200 bg-clip-text text-transparent">Stay PF &amp; ESI compliant</span> automatically.
+          </h1>
+          <p class="mt-6 text-lg sm:text-xl text-slate-300 leading-relaxed max-w-2xl mx-auto font-normal">
+            Engineered specifically for industrial labour contractors operating at <span class="text-white font-semibold">Tata Steel, L&amp;T, and Jindal</span> plants. Proactively surfaces compliance gaps before the labour auditor knocks.
+          </p>
+
+          <!-- Dual CTAs -->
+          <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button onclick="switchView('app', 'dashboard')" class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl text-base font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-glow-md hover:shadow-glow-sm hover:scale-[1.02] active:scale-[0.98] transition-all tap-target">
+              <span>Launch Live App</span>
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+
+            <button onclick="openDemoModal()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-base font-semibold bg-surface-850 hover:bg-surface-800 text-slate-200 border border-surface-borderLight hover:border-slate-500 transition-all tap-target">
+              <svg class="w-5 h-5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span>Book 15-Min Demo</span>
+            </button>
+          </div>
+
+          <!-- Trust Badges -->
+          <div class="mt-12 pt-8 border-t border-surface-border/60 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-xs font-mono text-slate-400">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-statutory-emerald" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <span>EPFO Form 11 Verification</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-statutory-emerald" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <span>ESIC Section 38 Insurance Check</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-statutory-emerald" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <span>CLRA 1970 Form T Muster Export</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- INTERACTIVE LIVE TERMINAL PREVIEW WIDGET -->
+        <!-- =================================================================== -->
+        <div class="mt-16 max-w-5xl mx-auto rounded-2xl bg-surface-900 border border-surface-border shadow-2xl overflow-hidden">
+          <!-- Terminal Titlebar -->
+          <div class="bg-surface-850 px-4 py-3 border-b border-surface-border flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+              <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+              <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+              <span class="text-xs font-mono text-slate-400 ml-2 font-medium">muster_live_terminal — Day Shift Gate 3</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-[11px] font-mono text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20">LIVE SIMULATOR</span>
+              <button onclick="switchView('app', 'dashboard')" class="text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1">
+                <span>Open Full App</span> &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- Simulator Body -->
+          <div class="p-4 sm:p-6 bg-surface-900">
+            <!-- Simulator Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-5 border-b border-surface-border">
+              <!-- Shift Switcher -->
+              <div class="flex items-center gap-2 bg-surface-850 p-1 rounded-xl border border-surface-border">
+                <button id="heroShiftDay" onclick="setHeroShift('day')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-500 text-white shadow-sm">
+                  ☀️ Day Shift (08:00–20:00)
+                </button>
+                <button id="heroShiftNight" onclick="setHeroShift('night')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
+                  🌙 Night Shift (20:00–08:00)
+                </button>
+              </div>
+
+              <!-- Quick Headcount Counters -->
+              <div class="flex items-center gap-4 text-xs font-mono">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-slate-400">Present:</span>
+                  <span id="heroPresentCount" class="font-bold text-statutory-emerald bg-statutory-emerald/10 px-2 py-0.5 rounded border border-statutory-emerald/20">188</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-slate-400">Half-Day:</span>
+                  <span id="heroHalfCount" class="font-bold text-statutory-amber bg-statutory-amber/10 px-2 py-0.5 rounded border border-statutory-amber/20">4</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-slate-400">Absent:</span>
+                  <span id="heroAbsentCount" class="font-bold text-statutory-crimson bg-statutory-crimson/10 px-2 py-0.5 rounded border border-statutory-crimson/20">8</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compliance Radar Banner inside Hero Widget -->
+            <div class="mb-5 p-3.5 rounded-xl bg-red-950/40 border border-red-800/40 flex items-center justify-between flex-wrap gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-red-200">STATUTORY AUDIT RISK DETECTED: 2 Workers missing PF UAN</h4>
+                  <p class="text-[11px] text-red-300/80">Liable under EPF Act Section 14B if deployed on shop floor without UAN.</p>
+                </div>
+              </div>
+              <button onclick="switchView('app', 'compliance')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-500 text-white shadow-sm transition-all">
+                Fix in Compliance Radar &rarr;
+              </button>
+            </div>
+
+            <!-- Simulated Worker Row Grid -->
+            <div class="space-y-2.5" id="heroWorkerList">
+              <!-- Rendered dynamically by JS -->
+            </div>
+          </div>
+          
+          <div class="bg-surface-850/70 px-4 py-2.5 border-t border-surface-border flex items-center justify-between text-xs text-slate-400">
+            <span>⚡ Interactive site preview — Tap P, H, or A to simulate high-speed turnstile marking</span>
+            <span class="text-brand-400 font-semibold cursor-pointer hover:underline" onclick="switchView('app', 'dashboard')">Access Live Database (200 Workers) &rarr;</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- THE CONTRACTOR'S PAIN / PROBLEM SECTION -->
+    <!-- ========================================================================= -->
+    <section id="problem" class="py-20 md:py-28 bg-surface-900 border-b border-surface-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <span class="text-xs font-mono font-bold uppercase tracking-wider text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1 rounded-full">
+            The Contractor's Liability
+          </span>
+          <h2 class="mt-4 text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Why 90% of industrial labour contractors fail surprise audits
+          </h2>
+          <p class="mt-4 text-base text-slate-300">
+            Principal employers pass 100% of the statutory PF &amp; ESI liability onto the contractor. When your attendance is managed on torn paper rolls or messy Excel sheets, you are one inspector away from massive penalties.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Problem 1 -->
+          <div class="bg-surface-850 p-6 rounded-2xl border border-surface-border hover:border-red-500/40 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mb-5 group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Paper Muster Chaos</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Registers get stained, torn, or misplaced on the shop floor. Reconciling manual signatures against billing takes 3 weeks each month, holding up your working capital.
+            </p>
+            <div class="mt-4 pt-3 border-t border-surface-border text-xs font-mono text-red-400">
+              Avg loss: ₹1.2L / mo in unbilled OT
+            </div>
+          </div>
+
+          <!-- Problem 2 -->
+          <div class="bg-surface-850 p-6 rounded-2xl border border-surface-border hover:border-red-500/40 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mb-5 group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">EPFO &amp; ESIC Inquiries</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Section 7A inquiries and Section 14B damages hit you with up to 25% penal damages and 12% compounding interest for migrant workers missing valid UAN numbers.
+            </p>
+            <div class="mt-4 pt-3 border-t border-surface-border text-xs font-mono text-red-400">
+              Legal risk: Criminal liability on owner
+            </div>
+          </div>
+
+          <!-- Problem 3 -->
+          <div class="bg-surface-850 p-6 rounded-2xl border border-surface-border hover:border-red-500/40 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mb-5 group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">The SpineHR Trap</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Built for air-conditioned IT corporate desks, not factory gates. Clunky desktop software, 40-column reports, and steep menus that take site supervisors 6 weeks to learn.
+            </p>
+            <div class="mt-4 pt-3 border-t border-surface-border text-xs font-mono text-red-400">
+              Site adoption rate: &lt; 20%
+            </div>
+          </div>
+
+          <!-- Problem 4 -->
+          <div class="bg-surface-850 p-6 rounded-2xl border border-surface-border hover:border-red-500/40 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mb-5 group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Gate Pass Deactivations</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Tata Steel, Jindal, or L&amp;T safety officers will freeze your workers' biometric gate access if statutory documents are incomplete during scheduled audits.
+            </p>
+            <div class="mt-4 pt-3 border-t border-surface-border text-xs font-mono text-red-400">
+              Result: Plant shutdown fines
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- FEATURES SECTION -->
+    <!-- ========================================================================= -->
+    <section id="features" class="py-20 md:py-28 bg-surface-950 border-b border-surface-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-400 bg-brand-500/10 border border-brand-500/20 px-3 py-1 rounded-full">
+            High-Velocity Industrial Tools
+          </span>
+          <h2 class="mt-4 text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Built for shift gates, not HR cubicles
+          </h2>
+          <p class="mt-4 text-base text-slate-300">
+            Every feature in Muster is tested against loud, fast, high-volume industrial environments where supervisors have 15 minutes to clear 300 workers.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Feature 1 -->
+          <div class="bg-surface-900 p-8 rounded-2xl border border-surface-border hover:border-brand-500/50 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 mb-6 group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-3">One-Tap Shift Attendance</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Super-sized, high-contrast touch targets for Present, Half-Day, and Absent. Mark 300 workers in under 90 seconds without lifting a pen or waiting for cloud lag.
+            </p>
+            <div class="mt-5 flex items-center gap-2 text-xs font-semibold text-brand-400">
+              <span>Optimistic offline caching</span> &bull; <span>Instant sync</span>
+            </div>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="bg-surface-900 p-8 rounded-2xl border border-surface-border hover:border-brand-500/50 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 mb-6 group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-3">Isolated Day &amp; Night Rosters</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Strict database constraints ensure workers cannot be mistakenly double-counted across rotating 12-hour shifts. Smooth shift turnover reports for handover meetings.
+            </p>
+            <div class="mt-5 flex items-center gap-2 text-xs font-semibold text-brand-400">
+              <span>Zero ghost records</span> &bull; <span>Overtime support</span>
+            </div>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="bg-surface-900 p-8 rounded-2xl border border-surface-border hover:border-brand-500/50 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 mb-6 group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-3">Live Headcount Radar</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Real-time shift summary showing exact breakdown of Present, Half-Day, Absent, and Unmarked personnel. Contractor owners see plant manpower live on their phone.
+            </p>
+            <div class="mt-5 flex items-center gap-2 text-xs font-semibold text-brand-400">
+              <span>Real-time KPI ribbons</span> &bull; <span>Owner mobile view</span>
+            </div>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="bg-surface-900 p-8 rounded-2xl border border-surface-border hover:border-statutory-emerald/50 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-statutory-emerald/10 border border-statutory-emerald/20 flex items-center justify-center text-statutory-emerald mb-6 group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-3">Proactive Compliance Gap Radar</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Continuously scans your entire roster and highlights every worker missing PF UAN or ESI IP. 1-click inline resolution before you deploy workers to the site.
+            </p>
+            <div class="mt-5 flex items-center gap-2 text-xs font-semibold text-statutory-emerald">
+              <span>Zero surprise audit notices</span> &bull; <span>Statutory shield</span>
+            </div>
+          </div>
+
+          <!-- Feature 5 -->
+          <div class="bg-surface-900 p-8 rounded-2xl border border-surface-border hover:border-brand-500/50 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 mb-6 group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-3">One-Click Form T &amp; Wage Export</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Export government-compliant monthly muster rolls (CLRA Form T) and draft wage sheets in clean CSV format. Ready for direct submission to company accounts.
+            </p>
+            <div class="mt-5 flex items-center gap-2 text-xs font-semibold text-brand-400">
+              <span>Statutory Form T</span> &bull; <span>Automatic wage calculation</span>
+            </div>
+          </div>
+
+          <!-- Feature 6 -->
+          <div class="bg-surface-900 p-8 rounded-2xl border border-surface-border hover:border-brand-500/50 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 mb-6 group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-3">Zero-Install Mobile Web App</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Runs on any budget Android smartphone right in the browser. Ultra-high contrast mode for glaring midday sun. No Play Store downloads or device management required.
+            </p>
+            <div class="mt-5 flex items-center gap-2 text-xs font-semibold text-brand-400">
+              <span>Works on ₹7,000 phones</span> &bull; <span>Zero IT overhead</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- COMPARISON SECTION: MUSTER VS LEGACY (SPINEHR / EXCEL) -->
+    <!-- ========================================================================= -->
+    <section id="vs-legacy" class="py-20 md:py-28 bg-surface-900 border-b border-surface-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-400 bg-brand-500/10 border border-brand-500/20 px-3 py-1 rounded-full">
+            Modern Engineering vs 90s Bloat
+          </span>
+          <h2 class="mt-4 text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            How Muster outperforms SpineHR on the factory floor
+          </h2>
+          <p class="mt-4 text-base text-slate-300">
+            SpineHR and legacy HR suites were built for corporate offices with IT staff. Muster is purpose-built for the brutal realities of Indian contractor operations.
+          </p>
+        </div>
+
+        <!-- Comparison Table Card -->
+        <div class="bg-surface-850 rounded-2xl border border-surface-border overflow-hidden shadow-xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-surface-border bg-surface-800/80">
+                  <th class="py-4 px-6 text-xs font-mono uppercase text-slate-400">Capability</th>
+                  <th class="py-4 px-6 text-xs font-mono uppercase text-brand-400 bg-brand-500/10 border-x border-brand-500/20">
+                    <span class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-brand-400"></span>
+                      <span>Muster Platform</span>
+                    </span>
+                  </th>
+                  <th class="py-4 px-6 text-xs font-mono uppercase text-slate-400">SpineHR / Legacy HR</th>
+                  <th class="py-4 px-6 text-xs font-mono uppercase text-slate-400">Manual Paper &amp; Excel</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-surface-border text-sm">
+                <!-- Row 1 -->
+                <tr class="hover:bg-surface-800/40 transition-colors">
+                  <td class="py-4 px-6 font-semibold text-white">Speed to mark 300 workers</td>
+                  <td class="py-4 px-6 font-bold text-statutory-emerald bg-brand-500/5 border-x border-brand-500/20">
+                    ⚡ 90 seconds (1-tap bulk &amp; individual)
+                  </td>
+                  <td class="py-4 px-6 text-slate-400">20–30 minutes (multi-screen clicks)</td>
+                  <td class="py-4 px-6 text-slate-400">45–60 minutes (pen ticking)</td>
+                </tr>
+
+                <!-- Row 2 -->
+                <tr class="hover:bg-surface-800/40 transition-colors">
+                  <td class="py-4 px-6 font-semibold text-white">Mobile turnstile usability</td>
+                  <td class="py-4 px-6 font-bold text-statutory-emerald bg-brand-500/5 border-x border-brand-500/20">
+                    Thumb-first, large contrast, glove-ready
+                  </td>
+                  <td class="py-4 px-6 text-slate-400">Desktop required or broken webview</td>
+                  <td class="py-4 px-6 text-slate-400">Physical paper prone to rain/dust</td>
+                </tr>
+
+                <!-- Row 3 -->
+                <tr class="hover:bg-surface-800/40 transition-colors">
+                  <td class="py-4 px-6 font-semibold text-white">Statutory PF &amp; ESI Gap Detection</td>
+                  <td class="py-4 px-6 font-bold text-statutory-emerald bg-brand-500/5 border-x border-brand-500/20">
+                    🛡️ Live proactive radar before deployment
+                  </td>
+                  <td class="py-4 px-6 text-slate-400">Buried deep in 40-column PDF reports</td>
+                  <td class="py-4 px-6 text-slate-400">Discovered during labour penalty notice</td>
+                </tr>
+
+                <!-- Row 4 -->
+                <tr class="hover:bg-surface-800/40 transition-colors">
+                  <td class="py-4 px-6 font-semibold text-white">Supervisor Training Time</td>
+                  <td class="py-4 px-6 font-bold text-statutory-emerald bg-brand-500/5 border-x border-brand-500/20">
+                    5 minutes (Zero technical training)
+                  </td>
+                  <td class="py-4 px-6 text-slate-400">3–6 weeks with paid consultants</td>
+                  <td class="py-4 px-6 text-slate-400">Constant handwriting disputes</td>
+                </tr>
+
+                <!-- Row 5 -->
+                <tr class="hover:bg-surface-800/40 transition-colors">
+                  <td class="py-4 px-6 font-semibold text-white">Pricing Model</td>
+                  <td class="py-4 px-6 font-bold text-statutory-emerald bg-brand-500/5 border-x border-brand-500/20">
+                    Transparent ₹12–15 / worker / month
+                  </td>
+                  <td class="py-4 px-6 text-slate-400">₹80–120/worker + mandatory setup fees</td>
+                  <td class="py-4 px-6 text-slate-400">Free upfront, ₹3L–5L in audit fines</td>
+                </tr>
+
+                <!-- Row 6 -->
+                <tr class="hover:bg-surface-800/40 transition-colors">
+                  <td class="py-4 px-6 font-semibold text-white">Form T Muster Roll Export</td>
+                  <td class="py-4 px-6 font-bold text-statutory-emerald bg-brand-500/5 border-x border-brand-500/20">
+                    1-Click verified CSV ready for accounts
+                  </td>
+                  <td class="py-4 px-6 text-slate-400">Manual report generator wizard</td>
+                  <td class="py-4 px-6 text-slate-400">Manual retyping into Excel</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TRUST & STATUTORY LABOUR LAW SECTION -->
+    <!-- ========================================================================= -->
+    <section id="compliance" class="py-20 md:py-28 bg-surface-950 border-b border-surface-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div class="lg:col-span-6">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-statutory-emerald bg-statutory-emerald/10 border border-statutory-emerald/20 px-3 py-1 rounded-full">
+              Legal Compliance Shield
+            </span>
+            <h2 class="mt-4 text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+              Aligned with Indian Labour Statutes &amp; Ministry Guidelines
+            </h2>
+            <p class="mt-4 text-base text-slate-300 leading-relaxed">
+              Muster is not just software; it is legal insurance for your contracting firm. We structure every record according to the exact compliance standards required by the Central Labour Ministry and state factories inspectors.
+            </p>
+
+            <div class="mt-8 space-y-4">
+              <div class="flex items-start gap-4 p-4 rounded-xl bg-surface-900 border border-surface-border">
+                <div class="w-8 h-8 rounded-lg bg-statutory-emerald/15 text-statutory-emerald flex items-center justify-center shrink-0 mt-0.5 font-mono font-bold text-xs">
+                  EPF
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Employees' Provident Funds Act, 1952</h4>
+                  <p class="text-xs text-slate-300 mt-1">Tracks Universal Account Numbers (UAN). Prevents non-deposit penalties under Section 7A and damages under Section 14B.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4 p-4 rounded-xl bg-surface-900 border border-surface-border">
+                <div class="w-8 h-8 rounded-lg bg-statutory-emerald/15 text-statutory-emerald flex items-center justify-center shrink-0 mt-0.5 font-mono font-bold text-xs">
+                  ESI
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Employees' State Insurance Act, 1948</h4>
+                  <p class="text-xs text-slate-300 mt-1">Validates Insurance Person (IP) enrolment status. Protects the contractor in the event of an industrial injury or accident on site.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4 p-4 rounded-xl bg-surface-900 border border-surface-border">
+                <div class="w-8 h-8 rounded-lg bg-statutory-emerald/15 text-statutory-emerald flex items-center justify-center shrink-0 mt-0.5 font-mono font-bold text-xs">
+                  CLRA
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Contract Labour (Regulation &amp; Abolition) Act, 1970</h4>
+                  <p class="text-xs text-slate-300 mt-1">Directly outputs Form T (Muster Roll) and Form XVII (Register of Wages) required for statutory contractor licensing.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Testimonial / Site Proof Card -->
+          <div class="lg:col-span-6">
+            <div class="relative rounded-2xl bg-surface-900 border border-surface-border p-8 shadow-2xl">
+              <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 rounded-full bg-brand-500/20 border border-brand-500/40 flex items-center justify-center font-bold text-brand-400">
+                  ST
+                </div>
+                <div>
+                  <h4 class="text-base font-bold text-white">Satyendra Traders</h4>
+                  <p class="text-xs text-slate-400">Lead Contractor — Tata Steel Jamshedpur Site</p>
+                </div>
+              </div>
+
+              <blockquote class="text-base text-slate-200 italic leading-relaxed mb-6">
+                "We run 380 riggers and helpers across Day and Night shifts at the Blast Furnace. With SpineHR, our supervisors never touched it because it was too complicated. With Muster, our attendance is marked in 2 minutes at the gate, and we passed our quarterly Tata Steel compliance audit with zero red flags."
+              </blockquote>
+
+              <div class="pt-6 border-t border-surface-border flex items-center justify-between text-xs text-slate-400 font-mono">
+                <div>
+                  <span class="text-statutory-emerald font-bold text-base">380</span>
+                  <span class="block">Workers on rolls</span>
+                </div>
+                <div>
+                  <span class="text-statutory-emerald font-bold text-base">100%</span>
+                  <span class="block">UAN Enrolment</span>
+                </div>
+                <div>
+                  <span class="text-brand-400 font-bold text-base">₹0</span>
+                  <span class="block">Audit Penalties</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- PRICING SECTION WITH INTERACTIVE WORKER SLIDER -->
+    <!-- ========================================================================= -->
+    <section id="pricing" class="py-20 md:py-28 bg-surface-900 border-b border-surface-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-400 bg-brand-500/10 border border-brand-500/20 px-3 py-1 rounded-full">
+            Simple Per-Worker Economics
+          </span>
+          <h2 class="mt-4 text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Predictable pricing that pays for itself on day one
+          </h2>
+          <p class="mt-4 text-base text-slate-300">
+            No expensive server licenses. No consulting retainers. Just a simple monthly fee based on active worker headcount.
+          </p>
+        </div>
+
+        <!-- Interactive Headcount Calculator Card -->
+        <div class="max-w-3xl mx-auto mb-16 bg-surface-850 p-6 sm:p-8 rounded-2xl border border-surface-border shadow-xl">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+            <div>
+              <h4 class="text-lg font-bold text-white">Interactive Headcount Calculator</h4>
+              <p class="text-xs text-slate-400">Slide to your active site worker count</p>
+            </div>
+            <div class="text-right">
+              <span class="text-2xl font-mono font-extrabold text-brand-400" id="sliderWorkerDisplay">300</span>
+              <span class="text-xs text-slate-400 ml-1">workers</span>
+            </div>
+          </div>
+
+          <input type="range" id="workerSlider" min="50" max="1000" step="25" value="300" oninput="updateCalculator(this.value)" class="w-full h-2.5 bg-surface-750 rounded-lg appearance-none cursor-pointer accent-brand-500 mb-8">
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-surface-border text-center">
+            <div class="p-3 bg-surface-900/60 rounded-xl border border-surface-border">
+              <span class="text-xs text-slate-400 block mb-1">Estimated Monthly Cost</span>
+              <span class="text-xl font-mono font-bold text-white" id="calcMonthlyPrice">₹3,600 / mo</span>
+              <span class="text-[10px] text-slate-500 block mt-1">(₹12 / worker / mo)</span>
+            </div>
+            <div class="p-3 bg-surface-900/60 rounded-xl border border-surface-border">
+              <span class="text-xs text-slate-400 block mb-1">Supervisor Time Saved</span>
+              <span class="text-xl font-mono font-bold text-brand-400" id="calcTimeSaved">38 hrs / mo</span>
+              <span class="text-[10px] text-slate-500 block mt-1">Instant gate turnstile marking</span>
+            </div>
+            <div class="p-3 bg-surface-900/60 rounded-xl border border-surface-border">
+              <span class="text-xs text-slate-400 block mb-1">Audit Risk Protected</span>
+              <span class="text-xl font-mono font-bold text-statutory-emerald" id="calcAuditSavings">₹4,20,000</span>
+              <span class="text-[10px] text-slate-500 block mt-1">EPFO/ESIC penalty avoidance</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Tier Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <!-- Tier 1 -->
+          <div class="bg-surface-850 p-8 rounded-2xl border border-surface-border hover:border-slate-500 transition-all flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-mono font-bold uppercase text-slate-400 mb-2">Site Starter</div>
+              <h3 class="text-2xl font-bold text-white mb-2">Up to 200 Workers</h3>
+              <p class="text-xs text-slate-400 mb-6">Ideal for single-shift civil &amp; fabrication contractors starting their digital transition.</p>
+              <div class="mb-6">
+                <span class="text-4xl font-extrabold text-white">₹15</span>
+                <span class="text-xs text-slate-400">/ worker / month</span>
+              </div>
+              <ul class="space-y-3 text-xs text-slate-300 mb-8">
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Day &amp; Night shift rosters</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>1-Tap gate attendance</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Basic PF/ESI gap radar</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Form T CSV monthly export</span>
+                </li>
+              </ul>
+            </div>
+            <button onclick="openDemoModal('Site Starter')" class="w-full py-3 rounded-xl text-xs font-bold bg-surface-800 hover:bg-surface-750 text-white border border-surface-border transition-all">
+              Choose Starter
+            </button>
+          </div>
+
+          <!-- Tier 2 (Highlighted) -->
+          <div class="bg-surface-850 p-8 rounded-2xl border-2 border-brand-500 shadow-glow-md relative flex flex-col justify-between">
+            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-brand-500 text-white text-[10px] uppercase font-mono font-bold tracking-wider px-3 py-1 rounded-full shadow-sm">
+              MOST POPULAR FOR INDUSTRIAL SITES
+            </div>
+            <div>
+              <div class="text-xs font-mono font-bold uppercase text-brand-400 mb-2">Industrial Pro</div>
+              <h3 class="text-2xl font-bold text-white mb-2">200 to 600 Workers</h3>
+              <p class="text-xs text-slate-400 mb-6">Designed for heavy industrial contractors with 24/7 rotating shifts at steel and power plants.</p>
+              <div class="mb-6">
+                <span class="text-4xl font-extrabold text-white">₹12</span>
+                <span class="text-xs text-slate-400">/ worker / month</span>
+              </div>
+              <ul class="space-y-3 text-xs text-slate-300 mb-8">
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Everything in Starter, plus:</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Real-time Compliance Radar</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Bulk Excel roster import tool</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Multi-supervisor gate pass logins</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Priority WhatsApp onboarding support</span>
+                </li>
+              </ul>
+            </div>
+            <button onclick="openDemoModal('Industrial Pro')" class="w-full py-3 rounded-xl text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-glow-sm transition-all">
+              Start Free Pilot
+            </button>
+          </div>
+
+          <!-- Tier 3 -->
+          <div class="bg-surface-850 p-8 rounded-2xl border border-surface-border hover:border-slate-500 transition-all flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-mono font-bold uppercase text-slate-400 mb-2">Enterprise Multi-Site</div>
+              <h3 class="text-2xl font-bold text-white mb-2">600+ Workers</h3>
+              <p class="text-xs text-slate-400 mb-6">For multi-plant contractors operating across Jamshedpur, Kalinganagar, Bellary, and Angul.</p>
+              <div class="mb-6">
+                <span class="text-4xl font-extrabold text-white">Custom</span>
+                <span class="text-xs text-slate-400">/ volume discount</span>
+              </div>
+              <ul class="space-y-3 text-xs text-slate-300 mb-8">
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Multi-site unified dashboard</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Custom ERP API integration (SAP / Oracle)</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Dedicated compliance legal advisor</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-statutory-emerald shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>99.9% uptime SLA guarantee</span>
+                </li>
+              </ul>
+            </div>
+            <button onclick="openDemoModal('Enterprise Multi-Site')" class="w-full py-3 rounded-xl text-xs font-bold bg-surface-800 hover:bg-surface-750 text-white border border-surface-border transition-all">
+              Talk to Founders
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- FINAL STRONG CTA SECTION -->
+    <!-- ========================================================================= -->
+    <section class="py-20 md:py-28 bg-gradient-to-b from-surface-950 to-surface-900 relative overflow-hidden">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-mono mb-6">
+          <span>STOP RISKING NOTICE UNDER SECTION 14B</span>
+        </div>
+        <h2 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+          Eliminate attendance chaos and audit anxiety on your site tomorrow morning.
+        </h2>
+        <p class="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto">
+          Join industrial contractors who have replaced SpineHR and paper registers with Muster. Setup takes less than 10 minutes.
+        </p>
+        <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button onclick="switchView('app', 'dashboard')" class="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-glow-md hover:scale-105 transition-all tap-target">
+            Launch Live Application &rarr;
+          </button>
+          <button onclick="openDemoModal()" class="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-semibold bg-surface-850 hover:bg-surface-800 text-slate-200 border border-surface-borderLight transition-all tap-target">
+            Schedule Contractor Walkthrough
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-surface-950 border-t border-surface-border py-12 text-slate-400 text-xs">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3">
+          <div class="w-6 h-6 rounded bg-brand-500 flex items-center justify-center font-mono font-bold text-white text-xs">M</div>
+          <span class="font-bold text-slate-200">MUSTER INDUSTRIAL SYSTEMS</span>
+          <span class="text-slate-600">|</span>
+          <span>India Labour Compliance Engine</span>
+        </div>
+        <div class="flex items-center gap-6">
+          <a href="#problem" class="hover:text-slate-200">The Problem</a>
+          <a href="#features" class="hover:text-slate-200">Features</a>
+          <a href="#vs-legacy" class="hover:text-slate-200">vs SpineHR</a>
+          <a href="#pricing" class="hover:text-slate-200">Pricing</a>
+          <button onclick="openDemoModal()" class="text-brand-400 hover:underline">Contact Support</button>
+        </div>
+        <div>
+          &copy; 2026 Muster Systems India Pvt. Ltd.
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- VIEW 2: PRODUCTION-GRADE MUSTER APPLICATION CONSOLE -->
+  <!-- ========================================================================= -->
+  <main id="appView" class="hidden min-h-[calc(100vh-4rem)] bg-surface-950">
+
+    <!-- Workspace Subheader / Tab Bar -->
+    <div class="bg-surface-900 border-b border-surface-border px-4 sm:px-6 lg:px-8 py-3">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <!-- Tab Navigation (Dashboard, Attendance, Compliance, Workers, Export) -->
+        <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0" id="appTabs">
+          <!-- TAB 0: DASHBOARD (Default Home) -->
+          <button data-apptab="dashboard" onclick="switchAppTab('dashboard')" class="app-tab-btn active px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-500 text-white shadow-sm flex items-center gap-2 shrink-0">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            <span>Dashboard</span>
+          </button>
+
+          <!-- TAB 1: ATTENDANCE -->
+          <button data-apptab="attendance" onclick="switchAppTab('attendance')" class="app-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white hover:bg-surface-800 flex items-center gap-2 shrink-0">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            <span>Shift Attendance</span>
+          </button>
+
+          <!-- TAB 2: COMPLIANCE -->
+          <button data-apptab="compliance" onclick="switchAppTab('compliance')" class="app-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white hover:bg-surface-800 flex items-center gap-2 shrink-0">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            <span>Compliance Radar</span>
+            <span id="appComplianceBadge" class="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-mono px-1.5 py-0.2 rounded-full">0 gaps</span>
+          </button>
+
+          <!-- TAB 3: WORKERS -->
+          <button data-apptab="workers" onclick="switchAppTab('workers')" class="app-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white hover:bg-surface-800 flex items-center gap-2 shrink-0">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <span>Worker Directory</span>
+          </button>
+
+          <!-- TAB 4: EXPORT -->
+          <button data-apptab="export" onclick="switchAppTab('export')" class="app-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white hover:bg-surface-800 flex items-center gap-2 shrink-0">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Form T &amp; Wages</span>
+          </button>
+        </div>
+
+        <!-- Fast Header Action -->
+        <div class="flex items-center gap-3">
+          <button onclick="openWorkerModal(null)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-800 hover:bg-surface-750 text-slate-200 border border-surface-borderLight flex items-center gap-1.5 transition-all">
+            <svg class="w-3.5 h-3.5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>Add Worker</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workspace Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+      <!-- ===================================================================== -->
+      <!-- TAB 0: HOME / DASHBOARD SCREEN (NEW) -->
+      <!-- ===================================================================== -->
+      <section id="tab-dashboard" class="app-tab-pane block">
+        <!-- Greeting & Quick Status -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-surface-border">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">Plant Operations Dashboard</h2>
+              <span class="text-xs font-mono bg-surface-850 text-slate-400 border border-surface-border px-2 py-0.5 rounded-md" id="dashTodayDate">Today</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Live snapshot of day &amp; night shift turnout and statutory enrolment health.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="loadDashboard(true)" class="px-3 py-1.5 rounded-xl bg-surface-900 hover:bg-surface-850 border border-surface-border text-xs font-medium text-slate-300 flex items-center gap-1.5 transition-all">
+              <svg class="w-3.5 h-3.5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Refresh Snapshot</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 1. TODAY'S SNAPSHOT CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <!-- Card 1: Total Workers -->
+          <div class="bg-surface-900 p-5 rounded-2xl border border-surface-border relative overflow-hidden group">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-mono uppercase text-slate-400 font-semibold">Total Workers</span>
+              <div class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              </div>
+            </div>
+            <div class="text-3xl font-mono font-extrabold text-white" id="dashTotalWorkers">—</div>
+            <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-statutory-emerald"></span>
+              <span>Active on contractor master roster</span>
+            </p>
+          </div>
+
+          <!-- Card 2: Present Now (Combined Day + Night) -->
+          <div class="bg-surface-900 p-5 rounded-2xl border border-surface-border relative overflow-hidden group">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-mono uppercase text-statutory-emerald font-semibold">Present Today</span>
+              <div class="w-8 h-8 rounded-lg bg-statutory-emerald/15 text-statutory-emerald flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+            </div>
+            <div class="text-3xl font-mono font-extrabold text-statutory-emerald" id="dashPresentCombined">—</div>
+            <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
+              <span>Day + Night roster turnout</span>
+            </p>
+          </div>
+
+          <!-- Card 3: Absent Today -->
+          <div class="bg-surface-900 p-5 rounded-2xl border border-surface-border relative overflow-hidden group">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-mono uppercase text-statutory-crimson font-semibold">Absent Today</span>
+              <div class="w-8 h-8 rounded-lg bg-statutory-crimson/15 text-statutory-crimson flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </div>
+            </div>
+            <div class="text-3xl font-mono font-extrabold text-statutory-crimson" id="dashAbsentCombined">—</div>
+            <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
+              <span>Marked absent across both shifts</span>
+            </p>
+          </div>
+
+          <!-- Card 4: Compliance Deficit Gaps -->
+          <div class="bg-surface-900 p-5 rounded-2xl border border-surface-border relative overflow-hidden group">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-mono uppercase text-red-400 font-semibold">Audit Risk Gaps</span>
+              <div class="w-8 h-8 rounded-lg bg-red-500/15 text-red-400 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              </div>
+            </div>
+            <div class="text-3xl font-mono font-extrabold text-red-400" id="dashGapsCount">—</div>
+            <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
+              <span>Missing PF UAN or ESI IP</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- 2. SHIFT ATTENDANCE VISUALIZATION + QUICK ACTIONS -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+          <!-- Visual Shift Comparison Card (Bar Visualization) -->
+          <div class="lg:col-span-7 bg-surface-900 p-6 rounded-2xl border border-surface-border">
+            <div class="flex items-center justify-between mb-6 pb-3 border-b border-surface-border">
+              <div>
+                <h3 class="text-base font-bold text-white">Today's Shift Attendance Breakdown</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Live headcount distribution per shift roster</p>
+              </div>
+              <div class="flex items-center gap-3 text-[11px] font-mono">
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-statutory-emerald"></span> Present</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-statutory-amber"></span> Half</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-statutory-crimson"></span> Absent</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-surface-700"></span> Unmarked</span>
+              </div>
+            </div>
+
+            <!-- Day Shift Visual Bar -->
+            <div class="mb-6">
+              <div class="flex items-center justify-between text-xs font-mono mb-2">
+                <span class="font-bold text-white flex items-center gap-1.5">
+                  <span>☀️ Day Shift</span>
+                  <span class="text-[11px] text-slate-400 font-normal">(08:00–20:00)</span>
+                </span>
+                <span id="dashDayRosterSummary" class="text-slate-300">Loading…</span>
+              </div>
+              <!-- Stacked Progress Bar -->
+              <div class="h-6 w-full rounded-xl bg-surface-850 border border-surface-border flex overflow-hidden p-0.5 gap-0.5" id="dashDayProgressBar">
+                <div class="h-full bg-statutory-emerald rounded-lg transition-all duration-500" style="width: 0%" title="Present"></div>
+                <div class="h-full bg-statutory-amber rounded-lg transition-all duration-500" style="width: 0%" title="Half"></div>
+                <div class="h-full bg-statutory-crimson rounded-lg transition-all duration-500" style="width: 0%" title="Absent"></div>
+                <div class="h-full bg-surface-750 rounded-lg transition-all duration-500" style="width: 100%" title="Unmarked"></div>
+              </div>
+              <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mt-1.5 px-1" id="dashDayStatPills">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- Night Shift Visual Bar -->
+            <div>
+              <div class="flex items-center justify-between text-xs font-mono mb-2">
+                <span class="font-bold text-white flex items-center gap-1.5">
+                  <span>🌙 Night Shift</span>
+                  <span class="text-[11px] text-slate-400 font-normal">(20:00–08:00)</span>
+                </span>
+                <span id="dashNightRosterSummary" class="text-slate-300">Loading…</span>
+              </div>
+              <!-- Stacked Progress Bar -->
+              <div class="h-6 w-full rounded-xl bg-surface-850 border border-surface-border flex overflow-hidden p-0.5 gap-0.5" id="dashNightProgressBar">
+                <div class="h-full bg-statutory-emerald rounded-lg transition-all duration-500" style="width: 0%" title="Present"></div>
+                <div class="h-full bg-statutory-amber rounded-lg transition-all duration-500" style="width: 0%" title="Half"></div>
+                <div class="h-full bg-statutory-crimson rounded-lg transition-all duration-500" style="width: 0%" title="Absent"></div>
+                <div class="h-full bg-surface-750 rounded-lg transition-all duration-500" style="width: 100%" title="Unmarked"></div>
+              </div>
+              <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mt-1.5 px-1" id="dashNightStatPills">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions Grid -->
+          <div class="lg:col-span-5 bg-surface-900 p-6 rounded-2xl border border-surface-border flex flex-col justify-between">
+            <div>
+              <h3 class="text-base font-bold text-white mb-1">Supervisor Quick Actions</h3>
+              <p class="text-xs text-slate-400 mb-5">Jump directly to shift turnstile or compliance tasks</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+              <!-- Action 1 -->
+              <button onclick="quickActionAttendance('day')" class="p-4 rounded-xl bg-surface-850 hover:bg-surface-800 border border-surface-borderLight hover:border-brand-500/60 transition-all text-left group">
+                <div class="w-8 h-8 rounded-lg bg-brand-500/15 text-brand-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                  ☀️
+                </div>
+                <div class="text-xs font-bold text-white">Mark Day Shift</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Pre-filled for today's roster</div>
+              </button>
+
+              <!-- Action 2 -->
+              <button onclick="quickActionAttendance('night')" class="p-4 rounded-xl bg-surface-850 hover:bg-surface-800 border border-surface-borderLight hover:border-brand-500/60 transition-all text-left group">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                  🌙
+                </div>
+                <div class="text-xs font-bold text-white">Mark Night Shift</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Open 20:00–08:00 roster</div>
+              </button>
+
+              <!-- Action 3 -->
+              <button onclick="switchAppTab('compliance')" class="p-4 rounded-xl bg-surface-850 hover:bg-surface-800 border border-surface-borderLight hover:border-red-500/60 transition-all text-left group">
+                <div class="w-8 h-8 rounded-lg bg-red-500/15 text-red-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                  🛡️
+                </div>
+                <div class="text-xs font-bold text-white">Fix Compliance Gaps</div>
+                <div class="text-[11px] text-red-400/90 mt-0.5" id="dashActionGaps">View missing UAN/ESI</div>
+              </button>
+
+              <!-- Action 4 -->
+              <button onclick="quickActionExport()" class="p-4 rounded-xl bg-surface-850 hover:bg-surface-800 border border-surface-borderLight hover:border-brand-500/60 transition-all text-left group">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                  📑
+                </div>
+                <div class="text-xs font-bold text-white">Export This Month</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Download Form T CSV</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. RECENT 7-DAY ATTENDANCE ACTIVITY STRIP -->
+        <div class="bg-surface-900 p-6 rounded-2xl border border-surface-border">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-white font-mono uppercase">Recent 7-Day Attendance Activity</h3>
+              <p class="text-xs text-slate-400">Click any date to inspect historical shift records</p>
+            </div>
+            <span class="text-xs font-mono text-slate-400">🟢 Complete &bull; 🟡 Incomplete Marking</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3" id="dashRecentDaysGrid">
+            <!-- Injected via loadDashboardRecentDays() -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 1: SHIFT ATTENDANCE TERMINAL WITH HISTORY VIEW -->
+      <!-- ===================================================================== -->
+      <section id="tab-attendance" class="app-tab-pane hidden">
+
+        <!-- 1. DATE HISTORY TIMELINE STRIP (SCROLLABLE & INCOMPLETE HIGHLIGHTS) -->
+        <div class="bg-surface-900 p-4 rounded-2xl border border-surface-border mb-6">
+          <div class="flex items-center justify-between mb-3 text-xs">
+            <span class="font-mono font-bold uppercase text-slate-400 flex items-center gap-2">
+              <span>📅 ATTENDANCE HISTORY TIMELINE (PAST 14 DAYS)</span>
+            </span>
+            <span class="text-[11px] font-mono text-slate-400 hidden sm:block">Scroll or click any date to view and mark</span>
+          </div>
+
+          <!-- Date History Scroller -->
+          <div class="flex items-center gap-2 overflow-x-auto pb-2" id="attHistoryStrip">
+            <!-- Injected dynamically via renderAttendanceHistoryStrip() -->
+            <div class="text-xs font-mono text-slate-500 py-3">Loading past attendance records…</div>
+          </div>
+        </div>
+
+        <!-- Terminal Control Bar with Prev/Next Steppers -->
+        <div class="bg-surface-900 p-4 sm:p-5 rounded-2xl border border-surface-border mb-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <!-- Date Picker with Step Buttons -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-xs font-mono font-medium text-slate-400">MUSTER DATE</label>
+                <div class="flex items-center gap-1 text-xs">
+                  <button onclick="stepDate(-1)" title="Previous Day" class="px-2 py-0.5 rounded bg-surface-850 hover:bg-surface-800 text-slate-300 border border-surface-borderLight">◀</button>
+                  <button onclick="stepDate(1)" title="Next Day" class="px-2 py-0.5 rounded bg-surface-850 hover:bg-surface-800 text-slate-300 border border-surface-borderLight">▶</button>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="date" id="appAttDate" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+                <button onclick="setTodayDate()" class="px-2.5 py-2 bg-surface-800 hover:bg-surface-750 text-[11px] font-mono rounded-xl border border-surface-border text-slate-300 shrink-0">
+                  Today
+                </button>
+              </div>
+            </div>
+
+            <!-- Shift Switcher -->
+            <div>
+              <label class="block text-xs font-mono font-medium text-slate-400 mb-1.5">SHIFT ROSTER</label>
+              <select id="appAttShift" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-brand-500">
+                <option value="day">☀️ Day Shift (08:00–20:00)</option>
+                <option value="night">🌙 Night Shift (20:00–08:00)</option>
+              </select>
+            </div>
+
+            <!-- Worker Search -->
+            <div>
+              <label class="block text-xs font-mono font-medium text-slate-400 mb-1.5">SEARCH WORKER</label>
+              <div class="relative">
+                <input type="text" id="appAttSearch" placeholder="Search by name or TATA-0001..." class="w-full bg-surface-850 border border-surface-borderLight rounded-xl pl-8 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+            </div>
+
+            <!-- Bulk Mark Action -->
+            <div>
+              <label class="block text-xs font-mono font-medium text-slate-400 mb-1.5">FAST ROSTER ACTION</label>
+              <button id="appMarkAllPresentBtn" class="w-full py-2 px-3 rounded-xl text-xs font-bold bg-statutory-emerald/15 hover:bg-statutory-emerald/25 text-statutory-emerald border border-statutory-emerald/30 transition-all flex items-center justify-center gap-1.5 tap-target">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Mark All Unmarked Present</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shift KPI Ribbon -->
+        <div id="appAttStats" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+          <div class="bg-surface-900 p-4 rounded-xl border border-surface-border">
+            <span class="text-[11px] font-mono text-slate-400 block mb-1">Total on Roster</span>
+            <span id="statTotal" class="text-2xl font-mono font-bold text-white">—</span>
+          </div>
+          <div class="bg-surface-900 p-4 rounded-xl border border-surface-border">
+            <span class="text-[11px] font-mono text-statutory-emerald block mb-1">Present (P)</span>
+            <span id="statPresent" class="text-2xl font-mono font-bold text-statutory-emerald">—</span>
+          </div>
+          <div class="bg-surface-900 p-4 rounded-xl border border-surface-border">
+            <span class="text-[11px] font-mono text-statutory-amber block mb-1">Half-Day (H)</span>
+            <span id="statHalf" class="text-2xl font-mono font-bold text-statutory-amber">—</span>
+          </div>
+          <div class="bg-surface-900 p-4 rounded-xl border border-surface-border">
+            <span class="text-[11px] font-mono text-statutory-crimson block mb-1">Absent (A)</span>
+            <span id="statAbsent" class="text-2xl font-mono font-bold text-statutory-crimson">—</span>
+          </div>
+          <div class="bg-surface-900 p-4 rounded-xl border border-surface-border col-span-2 sm:col-span-1">
+            <span class="text-[11px] font-mono text-slate-400 block mb-1">Pending Mark</span>
+            <span id="statPending" class="text-2xl font-mono font-bold text-slate-300">—</span>
+          </div>
+        </div>
+
+        <!-- Attendance Roster Table -->
+        <div class="bg-surface-900 rounded-2xl border border-surface-border overflow-hidden shadow-xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-surface-850 border-b border-surface-border text-[11px] font-mono uppercase text-slate-400">
+                  <th class="py-3 px-4 sm:px-6">Worker Details</th>
+                  <th class="py-3 px-4">Worker ID</th>
+                  <th class="py-3 px-4">Daily Wage</th>
+                  <th class="py-3 px-4">Statutory Status</th>
+                  <th class="py-3 px-4 sm:px-6 text-right">Attendance Mark</th>
+                </tr>
+              </thead>
+              <tbody id="appAttBody" class="divide-y divide-surface-border text-sm">
+                <!-- Rendered dynamically with skeletons -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 2: PROACTIVE COMPLIANCE RADAR (WITH PROGRESS BAR & COPY LIST) -->
+      <!-- ===================================================================== -->
+      <section id="tab-compliance" class="app-tab-pane hidden">
+        <!-- Compliance Header Card -->
+        <div class="bg-surface-900 p-6 rounded-2xl border border-surface-border mb-6">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-red-400 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-full">
+                AUDIT RISK RADAR
+              </span>
+              <h3 class="text-2xl font-extrabold text-white mt-3">Statutory Enrolment Deficiencies</h3>
+              <p class="text-xs text-slate-400 mt-1 max-w-xl">
+                Every worker listed below is actively scheduled on site rosters but is missing mandatory statutory numbers required by EPFO or ESIC.
+              </p>
+            </div>
+
+            <!-- Health Index Wheel/Stat -->
+            <div class="flex items-center gap-4 bg-surface-850 p-4 rounded-xl border border-surface-border">
+              <div class="text-center">
+                <span id="compHealthPct" class="text-3xl font-mono font-extrabold text-statutory-emerald">75%</span>
+                <span class="text-[10px] font-mono text-slate-400 block uppercase mt-0.5">Fully Enrolled</span>
+              </div>
+              <div class="h-10 w-px bg-surface-border"></div>
+              <div class="text-xs space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                  <span class="text-slate-400">Missing UAN:</span>
+                  <span id="compMissingUan" class="font-mono font-bold text-white">0</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span class="text-slate-400">Missing ESI:</span>
+                  <span id="compMissingEsi" class="font-mono font-bold text-white">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ENROLMENT PROGRESS BAR (NEW) -->
+          <div class="mt-6 pt-5 border-t border-surface-border">
+            <div class="flex items-center justify-between text-xs font-mono mb-2">
+              <span class="font-semibold text-white">Statutory Enrolment Progress</span>
+              <span id="compProgressBarLabel" class="text-slate-300">141 of 200 Workers Fully Enrolled</span>
+            </div>
+            <div class="w-full h-3 rounded-full bg-surface-800 overflow-hidden border border-surface-borderLight flex">
+              <div id="compProgressBarFill" class="h-full bg-gradient-to-r from-emerald-600 to-statutory-emerald transition-all duration-700" style="width: 71%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deficiencies Table + Copy List Action -->
+        <div class="bg-surface-900 rounded-2xl border border-surface-border overflow-hidden shadow-xl">
+          <div class="p-4 bg-surface-850 border-b border-surface-border flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-mono text-slate-200 font-semibold uppercase">Actionable Workers with Compliance Deficit</span>
+              <span class="text-xs text-slate-400 block sm:inline sm:ml-2">Tap "Resolve" to update record</span>
+            </div>
+            
+            <!-- COPY LIST BUTTON (NEW) -->
+            <button onclick="copyCompliancePendingList()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-surface-800 hover:bg-surface-750 text-slate-200 border border-surface-borderLight hover:border-brand-500/60 flex items-center gap-2 transition-all">
+              <svg class="w-4 h-4 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+              <span>Copy Pending List for PF/ESI Consultant</span>
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-surface-border bg-surface-800/50 text-[11px] font-mono uppercase text-slate-400">
+                  <th class="py-3 px-6">Worker Name</th>
+                  <th class="py-3 px-4">Worker ID</th>
+                  <th class="py-3 px-4">Roster Shift</th>
+                  <th class="py-3 px-4">EPFO UAN</th>
+                  <th class="py-3 px-4">ESIC IP</th>
+                  <th class="py-3 px-6 text-right">Instant Action</th>
+                </tr>
+              </thead>
+              <tbody id="appCompBody" class="divide-y divide-surface-border text-sm">
+                <!-- Injected via loadCompliance() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 3: WORKER MANAGEMENT DIRECTORY (WITH SEARCH & SORTING) -->
+      <!-- ===================================================================== -->
+      <section id="tab-workers" class="app-tab-pane hidden">
+        <div class="bg-surface-900 p-4 rounded-2xl border border-surface-border mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[260px]">
+            <!-- Search -->
+            <div class="relative flex-1 min-w-[200px]">
+              <input type="text" id="appWorkerSearch" placeholder="Search workers by name or ID..." class="w-full bg-surface-850 border border-surface-borderLight rounded-xl pl-8 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500">
+              <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+
+            <!-- Shift Filter -->
+            <select id="appWorkerShiftFilter" class="bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+              <option value="">All Shifts</option>
+              <option value="day">Day Shift Only</option>
+              <option value="night">Night Shift Only</option>
+            </select>
+
+            <!-- SORTING DROPDOWN (NEW) -->
+            <div class="flex items-center gap-1.5 bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-1.5">
+              <span class="text-[11px] font-mono text-slate-400">Sort:</span>
+              <select id="appWorkerSort" onchange="renderWorkerDirectoryTable()" class="bg-transparent text-xs font-medium text-white focus:outline-none cursor-pointer">
+                <option value="name_asc">Name (A → Z)</option>
+                <option value="name_desc">Name (Z → A)</option>
+                <option value="wid_asc">Worker ID (Ascending)</option>
+                <option value="wid_desc">Worker ID (Descending)</option>
+                <option value="wage_desc">Daily Wage (High → Low)</option>
+                <option value="wage_asc">Daily Wage (Low → High)</option>
+              </select>
+            </div>
+          </div>
+
+          <button onclick="openWorkerModal(null)" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-sm flex items-center gap-2 transition-all">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>Add New Worker</span>
+          </button>
+        </div>
+
+        <div class="bg-surface-900 rounded-2xl border border-surface-border overflow-hidden shadow-xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-surface-850 border-b border-surface-border text-[11px] font-mono uppercase text-slate-400">
+                  <th class="py-3 px-6 cursor-pointer hover:text-white" onclick="cycleSort('name')">Worker ↕</th>
+                  <th class="py-3 px-4 cursor-pointer hover:text-white" onclick="cycleSort('wid')">Worker ID ↕</th>
+                  <th class="py-3 px-4">Shift</th>
+                  <th class="py-3 px-4 cursor-pointer hover:text-white" onclick="cycleSort('wage')">Daily Wage ↕</th>
+                  <th class="py-3 px-4">PF UAN</th>
+                  <th class="py-3 px-4">ESI IP</th>
+                  <th class="py-3 px-6 text-right">Edit</th>
+                </tr>
+              </thead>
+              <tbody id="appWorkerBody" class="divide-y divide-surface-border text-sm">
+                <!-- Injected via loadWorkers() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 4: STATUTORY FORM T & WAGE EXPORT -->
+      <!-- ===================================================================== -->
+      <section id="tab-export" class="app-tab-pane hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 bg-surface-900 p-6 rounded-2xl border border-surface-border">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-brand-400 bg-brand-500/10 border border-brand-500/20 px-2.5 py-1 rounded-full">
+              CLRA 1970 &bull; FORM T
+            </span>
+            <h3 class="text-2xl font-extrabold text-white mt-3">Monthly Muster &amp; Wage Sheet</h3>
+            <p class="text-xs text-slate-400 mt-1 mb-6">
+              Generate government-compliant muster rolls calculating total days present, half-days, and draft gross payable for contractor billing.
+            </p>
+
+            <div class="p-4 bg-surface-850 rounded-xl border border-surface-border mb-6">
+              <label class="block text-xs font-mono font-medium text-slate-400 mb-2">SELECT BILLING MONTH (YYYY-MM)</label>
+              <div class="flex items-center gap-3">
+                <input type="month" id="appExportMonth" class="bg-surface-900 border border-surface-borderLight rounded-xl px-4 py-2 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+                <button onclick="triggerExport()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-glow-sm flex items-center gap-2 transition-all">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  <span>Download Form T CSV</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="text-xs text-slate-400 space-y-2">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-statutory-emerald" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Calculates gross wage: <code>(Present + 0.5 &times; Half) &times; Daily Rate</code></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-statutory-emerald" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Automatically appends <code>ENROLMENT PENDING</code> flag on missing UAN/ESI</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Excel Roster Bulk Import Tool -->
+          <div class="lg:col-span-5 bg-surface-900 p-6 rounded-2xl border border-surface-border">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 bg-surface-850 border border-surface-border px-2.5 py-1 rounded-full">
+              BULK ONBOARDING
+            </span>
+            <h3 class="text-xl font-extrabold text-white mt-3">Import Excel / CSV Roster</h3>
+            <p class="text-xs text-slate-400 mt-1 mb-4">
+              Bring existing contractor rosters into Muster. Automatically assigns sequential <code>TATA-XXXX</code> IDs if absent.
+            </p>
+
+            <div class="border-2 border-dashed border-surface-borderLight hover:border-brand-500/60 rounded-xl p-6 text-center transition-colors">
+              <svg class="w-8 h-8 text-slate-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              <p class="text-xs font-semibold text-slate-300">Drop CSV file or paste JSON rows</p>
+              <p class="text-[10px] text-slate-500 mt-1">Columns: name, phone, daily_wage, default_shift, uan, esi_ip</p>
+              <button onclick="openImportModal()" class="mt-4 px-4 py-2 rounded-xl text-xs font-bold bg-surface-800 hover:bg-surface-750 text-slate-200 border border-surface-border">
+                Paste / Upload Roster
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADD / EDIT WORKER -->
+  <!-- ========================================================================= -->
+  <div id="workerModal" class="fixed inset-0 z-50 bg-black/70 modal-backdrop hidden items-center justify-center p-4">
+    <div class="bg-surface-900 rounded-2xl border border-surface-border max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-5 pb-3 border-b border-surface-border">
+        <div>
+          <h3 id="workerModalTitle" class="text-lg font-bold text-white">Add New Worker</h3>
+          <p class="text-xs text-slate-400">Save worker credentials to contractor database</p>
+        </div>
+        <button onclick="closeWorkerModal()" class="text-slate-400 hover:text-white p-1">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="workerForm" onsubmit="saveWorker(event)" class="space-y-4">
+        <input type="hidden" id="modalEditId">
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-mono font-medium text-slate-400 mb-1">WORKER ID *</label>
+            <input type="text" id="modalWid" required placeholder="TATA-0201" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-mono font-medium text-slate-400 mb-1">FULL NAME *</label>
+            <input type="text" id="modalName" required placeholder="Sanjay Mahato" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-mono font-medium text-slate-400 mb-1">PHONE NUMBER</label>
+            <input type="tel" id="modalPhone" placeholder="9876543210" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-mono font-medium text-slate-400 mb-1">DAILY WAGE (₹) *</label>
+            <input type="number" id="modalWage" required min="0" step="10" placeholder="620" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono font-medium text-slate-400 mb-1">DEFAULT ROSTER SHIFT</label>
+          <select id="modalShift" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-brand-500">
+            <option value="day">☀️ Day Shift (08:00–20:00)</option>
+            <option value="night">🌙 Night Shift (20:00–08:00)</option>
+          </select>
+        </div>
+
+        <div class="pt-2 border-t border-surface-border">
+          <span class="text-[11px] font-mono text-statutory-emerald uppercase font-bold block mb-2">Statutory Identifiers (Crucial for Compliance)</span>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-mono text-slate-400 mb-1">PF UAN (12 digits)</label>
+              <input type="text" id="modalUan" placeholder="100230000042" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+            </div>
+            <div>
+              <label class="block text-xs font-mono text-slate-400 mb-1">ESI IP (10 digits)</label>
+              <input type="text" id="modalEsi" placeholder="3100500042" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 flex items-center justify-end gap-3">
+          <button type="button" onclick="closeWorkerModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-surface-800">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-glow-sm">
+            Save Record
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: BOOK A DEMO / LEAD CAPTURE -->
+  <!-- ========================================================================= -->
+  <div id="demoModal" class="fixed inset-0 z-50 bg-black/70 modal-backdrop hidden items-center justify-center p-4">
+    <div class="bg-surface-900 rounded-2xl border border-surface-border max-w-md w-full p-6 sm:p-8 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded bg-brand-500 flex items-center justify-center text-white font-mono font-bold text-xs">M</div>
+          <h3 class="text-lg font-bold text-white">Book 15-Min Walkthrough</h3>
+        </div>
+        <button onclick="closeDemoModal()" class="text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400 mb-6">
+        See how Muster eliminates attendance fraud and resolves your statutory PF/ESI gaps in under 15 minutes.
+      </p>
+
+      <form onsubmit="submitDemoLead(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1">YOUR NAME *</label>
+          <input type="text" id="demoName" required placeholder="Satyendra Sharma" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1">CONTRACTING FIRM / SITE *</label>
+          <input type="text" id="demoCompany" required placeholder="Sharma Engineering @ Tata Steel Jamshedpur" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">PHONE (WHATSAPP) *</label>
+            <input type="tel" id="demoPhone" required placeholder="9835012345" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">WORKER COUNT</label>
+            <select id="demoWorkers" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+              <option value="100-250">100–250 workers</option>
+              <option value="250-600" selected>250–600 workers</option>
+              <option value="600+">600+ workers</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-4 flex flex-col gap-2.5">
+          <button type="submit" class="w-full py-3 rounded-xl text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-glow-sm transition-all flex items-center justify-center gap-2">
+            <span>Confirm Live Walkthrough</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+          
+          <a id="demoWhatsappBtn" href="https://wa.me/919835012345?text=Hello%20Muster%20Team%2C%20I%20manage%20contract%20labour%20and%20want%20to%20see%20a%20demo%20of%20Muster." target="_blank" class="w-full py-2.5 rounded-xl text-xs font-semibold bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/60 transition-all flex items-center justify-center gap-2">
+            <span>Instant Chat on WhatsApp</span>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: BULK ROSTER IMPORT -->
+  <!-- ========================================================================= -->
+  <div id="importModal" class="fixed inset-0 z-50 bg-black/70 modal-backdrop hidden items-center justify-center p-4">
+    <div class="bg-surface-900 rounded-2xl border border-surface-border max-w-lg w-full p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white">Import Contractor Roster (JSON / Excel rows)</h3>
+        <button onclick="closeImportModal()" class="text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400 mb-3">
+        Paste worker rows as JSON objects. Missing worker IDs will automatically receive sequential <code>TATA-XXXX</code> numbers.
+      </p>
+
+      <textarea id="importPayload" rows="8" class="w-full bg-surface-850 border border-surface-borderLight rounded-xl p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-brand-500 mb-4" placeholder='[
+  {"name": "Mukesh Soren", "phone": "9876543210", "daily_wage": 620, "default_shift": "day", "uan": "100230000088", "esi_ip": "3100500088"},
+  {"name": "Deepak Hansda", "daily_wage": 580, "default_shift": "night"}
+]'></textarea>
+
+      <div class="flex items-center justify-between">
+        <button onclick="loadSampleImport()" class="text-xs font-mono text-brand-400 hover:underline">Insert Demo Rows</button>
+        <div class="flex gap-2">
+          <button onclick="closeImportModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 bg-surface-800">Cancel</button>
+          <button onclick="executeImport()" class="px-5 py-2 rounded-xl text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white">Import Roster</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- APPLICATION SCRIPT & REALTIME ENGINE -->
+  <!-- ========================================================================= -->
+  <script>
+    // Configuration
+    const API = ""; // relative paths so it works whether port 3000 or staging
+    let isConnected = false;
+    let currentView = 'landing'; // 'landing' or 'app'
+    let currentAppTab = 'dashboard'; // 'dashboard' as default home tab
+    let attRoster = [];
+    let workersList = [];
+    let complianceData = { total: 0, gap_count: 0, missing_uan: 0, missing_esi: 0, workers: [] };
+    let attendanceHistoryDays = [];
+
+    // Live Simulator Data for Landing Hero
+    const heroMockWorkers = {
+      day: [
+        { wid: 'TATA-0012', name: 'Rameshwar Tudu', wage: 650, role: 'Fitter', status: 'P', uan: true, esi: true },
+        { wid: 'TATA-0014', name: 'Birendra Kumar', wage: 580, role: 'Rigger', status: 'P', uan: true, esi: true },
+        { wid: 'TATA-0018', name: 'Manoj Kisku', wage: 520, role: 'Helper', status: 'H', uan: false, esi: true },
+        { wid: 'TATA-0023', name: 'Arun Soren', wage: 620, role: 'Welder', status: 'P', uan: true, esi: true },
+        { wid: 'TATA-0031', name: 'Sunil Mahato', wage: 540, role: 'Grinder', status: 'A', uan: false, esi: false }
+      ],
+      night: [
+        { wid: 'TATA-0044', name: 'Sanjay Hansda', wage: 650, role: 'Fitter', status: 'P', uan: true, esi: true },
+        { wid: 'TATA-0048', name: 'Pradeep Das', wage: 580, role: 'Rigger', status: 'P', uan: true, esi: true },
+        { wid: 'TATA-0052', name: 'Anil Murmu', wage: 520, role: 'Helper', status: 'P', uan: true, esi: true },
+        { wid: 'TATA-0059', name: 'Ganesh Rana', wage: 620, role: 'Welder', status: 'A', uan: true, esi: false }
+      ]
+    };
+    let heroCurrentShift = 'day';
+
+    // Utilities
+    function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+    function formatShortDate(dateStr) {
+      const parts = dateStr.split('-');
+      if (parts.length < 3) return dateStr;
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
+    function showToast(title, msg, type = 'info') {
+      const el = document.createElement('div');
+      el.className = `p-4 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-2 pointer-events-auto flex items-start gap-3 ${
+        type === 'success' ? 'bg-surface-900 border-statutory-emerald/40 text-statutory-emerald' :
+        type === 'error' ? 'bg-surface-900 border-red-500/40 text-red-400' :
+        'bg-surface-900 border-surface-borderLight text-slate-200'
+      }`;
+      el.innerHTML = `
+        <div class="mt-0.5 text-base font-bold">${type === 'success' ? '✓' : type === 'error' ? '⚠' : 'ℹ'}</div>
+        <div class="flex-1">
+          <div class="text-xs font-bold text-white">${title}</div>
+          <div class="text-[11px] text-slate-300 mt-0.5 leading-snug">${msg}</div>
+        </div>
+      `;
+      const c = document.getElementById('toastContainer');
+      c.appendChild(el);
+      requestAnimationFrame(() => el.classList.remove('translate-y-2'));
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 4000);
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(API + path, opts);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      return res;
+    }
+
+    // Connectivity Ping
+    async function checkBackend() {
+      const dot = document.getElementById('backendDot');
+      const text = document.getElementById('backendStatusText');
+      try {
+        const res = await (await api('/api/compliance')).json();
+        isConnected = true;
+        complianceData = res;
+        dot.className = 'w-2 h-2 rounded-full bg-statutory-emerald pulse-dot';
+        text.className = 'text-statutory-emerald font-semibold';
+        text.textContent = `Connected (${res.total} Workers)`;
+        document.getElementById('appComplianceBadge').textContent = `${res.gap_count} gaps`;
+      } catch (err) {
+        isConnected = false;
+        dot.className = 'w-2 h-2 rounded-full bg-red-500';
+        text.className = 'text-red-400';
+        text.textContent = 'Backend Offline';
+      }
+    }
+
+    // View Switching (Landing vs App)
+    function switchView(viewName, initialTab = 'dashboard') {
+      currentView = viewName;
+      const landing = document.getElementById('landingView');
+      const app = document.getElementById('appView');
+      const landingNav = document.getElementById('landingNav');
+      const appNavHeader = document.getElementById('appNavHeader');
+      const navDemoBtn = document.getElementById('navDemoBtn');
+      const navLaunchBtn = document.getElementById('navLaunchBtn');
+      const navLandingBtn = document.getElementById('navLandingBtn');
+
+      if (viewName === 'app') {
+        landing.classList.add('hidden');
+        landing.classList.remove('block');
+        app.classList.remove('hidden');
+        app.classList.add('block');
+
+        landingNav.classList.add('hidden');
+        appNavHeader.classList.remove('hidden');
+        appNavHeader.classList.add('flex');
+        navDemoBtn.classList.add('hidden');
+        navLaunchBtn.classList.add('hidden');
+        navLandingBtn.classList.remove('hidden');
+        navLandingBtn.classList.add('inline-flex');
+
+        window.location.hash = 'app';
+        switchAppTab(initialTab);
+      } else {
+        app.classList.add('hidden');
+        app.classList.remove('block');
+        landing.classList.remove('hidden');
+        landing.classList.add('block');
+
+        landingNav.classList.remove('hidden');
+        appNavHeader.classList.add('hidden');
+        appNavHeader.classList.remove('flex');
+        navDemoBtn.classList.remove('hidden');
+        navLaunchBtn.classList.remove('hidden');
+        navLandingBtn.classList.add('hidden');
+        navLandingBtn.classList.remove('inline-flex');
+
+        window.location.hash = '';
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Tab Switching inside App
+    function switchAppTab(tabId) {
+      currentAppTab = tabId;
+      document.querySelectorAll('.app-tab-pane').forEach(el => {
+        el.classList.add('hidden');
+        el.classList.remove('tab-fade-enter');
+      });
+      const activePane = document.getElementById(`tab-${tabId}`);
+      if (activePane) {
+        activePane.classList.remove('hidden');
+        activePane.classList.add('tab-fade-enter');
+      }
+
+      document.querySelectorAll('.app-tab-btn').forEach(btn => {
+        if (btn.dataset.apptab === tabId) {
+          btn.className = 'app-tab-btn active px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-500 text-white shadow-sm flex items-center gap-2 shrink-0';
+        } else {
+          btn.className = 'app-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white hover:bg-surface-800 flex items-center gap-2 shrink-0';
+        }
+      });
+
+      if (tabId === 'dashboard') loadDashboard();
+      if (tabId === 'attendance') {
+        loadAttendanceHistoryTimeline();
+        loadAppAttendance();
+      }
+      if (tabId === 'compliance') loadCompliance();
+      if (tabId === 'workers') loadWorkers();
+    }
+
+    // =========================================================================
+    // 1. DASHBOARD / HOME SCREEN LOGIC
+    // =========================================================================
+    async function loadDashboard(showRefreshToast = false) {
+      const today = todayISO();
+      document.getElementById('dashTodayDate').textContent = formatShortDate(today);
+
+      try {
+        const [sumRes, compRes, histRes] = await Promise.all([
+          api(`/api/summary?date=${today}`),
+          api('/api/compliance'),
+          api('/api/attendance/history?days=7')
+        ]);
+
+        const sum = await sumRes.json();
+        const comp = await compRes.json();
+        const hist = await histRes.json();
+        complianceData = comp;
+
+        // Snapshot cards
+        document.getElementById('dashTotalWorkers').textContent = comp.total;
+        const totalPresentToday = (sum.day?.present || 0) + (sum.night?.present || 0);
+        const totalAbsentToday = (sum.day?.absent || 0) + (sum.night?.absent || 0);
+        document.getElementById('dashPresentCombined').textContent = totalPresentToday;
+        document.getElementById('dashAbsentCombined').textContent = totalAbsentToday;
+        document.getElementById('dashGapsCount').textContent = comp.gap_count;
+        document.getElementById('dashActionGaps').textContent = `${comp.gap_count} workers require PF/ESI`;
+
+        // Render Shift Comparison Bars
+        renderShiftComparisonBar('day', sum.day);
+        renderShiftComparisonBar('night', sum.night);
+
+        // Render Recent 7 Days Grid
+        renderDashboardRecentDays(hist);
+
+        if (showRefreshToast) showToast('Dashboard Updated', 'Latest attendance counts synced live', 'success');
+      } catch (err) {
+        showToast('Dashboard Sync Failed', err.message, 'error');
+      }
+    }
+
+    function renderShiftComparisonBar(shift, data) {
+      const isDay = shift === 'day';
+      const prefix = isDay ? 'dashDay' : 'dashNight';
+      const s = data || { total: isDay ? 150 : 50, present: 0, half: 0, absent: 0, not_marked: isDay ? 150 : 50 };
+      const total = s.total || 1;
+
+      const pPct = Math.round((s.present / total) * 100);
+      const hPct = Math.round((s.half / total) * 100);
+      const aPct = Math.round((s.absent / total) * 100);
+      const uPct = Math.max(0, 100 - (pPct + hPct + aPct));
+
+      document.getElementById(`${prefix}RosterSummary`).textContent = `${s.present} Present / ${s.total} on Roster (${pPct}%)`;
+
+      const bar = document.getElementById(`${prefix}ProgressBar`);
+      const children = bar.children;
+      children[0].style.width = `${pPct}%`;
+      children[1].style.width = `${hPct}%`;
+      children[2].style.width = `${aPct}%`;
+      children[3].style.width = `${uPct}%`;
+
+      document.getElementById(`${prefix}StatPills`).innerHTML = `
+        <span class="text-statutory-emerald font-bold">${s.present} Present (${pPct}%)</span>
+        <span class="text-statutory-amber font-bold">${s.half} Half (${hPct}%)</span>
+        <span class="text-statutory-crimson font-bold">${s.absent} Absent (${aPct}%)</span>
+        <span class="text-slate-400 font-medium">${s.not_marked} Unmarked</span>
+      `;
+    }
+
+    function renderDashboardRecentDays(hist) {
+      const container = document.getElementById('dashRecentDaysGrid');
+      container.innerHTML = '';
+
+      hist.slice(0, 7).forEach(d => {
+        const isComplete = d.is_complete;
+        const totalMarked = d.total_present + d.total_half + d.total_absent;
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
+          isComplete ? 'bg-surface-850 border-statutory-emerald/40 hover:border-statutory-emerald' :
+          totalMarked > 0 ? 'bg-surface-850 border-statutory-amber/40 hover:border-statutory-amber' :
+          'bg-surface-850/60 border-surface-borderLight hover:border-slate-500'
+        }`;
+        card.onclick = () => {
+          document.getElementById('appAttDate').value = d.date;
+          switchAppTab('attendance');
+        };
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between text-[11px] font-mono mb-1">
+            <span class="text-slate-300 font-bold">${formatShortDate(d.date)}</span>
+            <span class="w-2 h-2 rounded-full ${isComplete ? 'bg-statutory-emerald' : totalMarked > 0 ? 'bg-statutory-amber' : 'bg-slate-600'}"></span>
+          </div>
+          <div class="text-lg font-mono font-bold text-white mt-1">
+            ${d.total_present}<span class="text-xs text-slate-400 font-normal"> / ${d.day.total + d.night.total}</span>
+          </div>
+          <div class="text-[10px] font-mono mt-1 ${isComplete ? 'text-statutory-emerald' : totalMarked > 0 ? 'text-amber-400' : 'text-slate-500'}">
+            ${isComplete ? '✓ 100% Marked' : totalMarked > 0 ? `⚠️ ${d.total_not_marked} unmarked` : 'Not marked'}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Quick Actions
+    function quickActionAttendance(shift) {
+      document.getElementById('appAttDate').value = todayISO();
+      document.getElementById('appAttShift').value = shift;
+      switchAppTab('attendance');
+      showToast('Shift Selected', `Ready to mark ${shift.toUpperCase()} shift for today`, 'info');
+    }
+
+    function quickActionExport() {
+      document.getElementById('appExportMonth').value = todayISO().slice(0, 7);
+      switchAppTab('export');
+    }
+
+    // =========================================================================
+    // 2. ATTENDANCE SCREEN & TIMELINE STRIP
+    // =========================================================================
+    async function loadAttendanceHistoryTimeline() {
+      const container = document.getElementById('attHistoryStrip');
+      try {
+        const res = await (await api('/api/attendance/history?days=14')).json();
+        attendanceHistoryDays = res;
+        renderAttendanceHistoryStrip();
+      } catch (err) {
+        container.innerHTML = `<div class="text-xs text-red-400 py-2">Unable to load attendance timeline: ${err.message}</div>`;
+      }
+    }
+
+    function renderAttendanceHistoryStrip() {
+      const container = document.getElementById('attHistoryStrip');
+      container.innerHTML = '';
+      const selectedDate = document.getElementById('appAttDate').value || todayISO();
+
+      attendanceHistoryDays.forEach(d => {
+        const isSelected = d.date === selectedDate;
+        const isComplete = d.is_complete;
+        const hasMarks = (d.total_present + d.total_half + d.total_absent) > 0;
+
+        const btn = document.createElement('button');
+        btn.onclick = () => {
+          document.getElementById('appAttDate').value = d.date;
+          renderAttendanceHistoryStrip();
+          loadAppAttendance();
+        };
+
+        btn.className = `px-3.5 py-2 rounded-xl text-left font-mono shrink-0 transition-all border ${
+          isSelected ? 'bg-brand-500/20 border-brand-500 text-white shadow-sm ring-1 ring-brand-500' :
+          isComplete ? 'bg-surface-850 hover:bg-surface-800 border-statutory-emerald/40 text-slate-200' :
+          hasMarks ? 'bg-surface-850 hover:bg-surface-800 border-statutory-amber/40 text-slate-200' :
+          'bg-surface-850/50 hover:bg-surface-800 border-surface-borderLight text-slate-400'
+        }`;
+
+        btn.innerHTML = `
+          <div class="flex items-center gap-1.5 text-xs font-bold ${isSelected ? 'text-brand-400' : 'text-white'}">
+            <span>${formatShortDate(d.date)}</span>
+            ${isComplete ? '<span class="text-[10px] text-statutory-emerald">●</span>' : hasMarks ? '<span class="text-[10px] text-amber-400">●</span>' : ''}
+          </div>
+          <div class="text-[10px] mt-0.5 ${isComplete ? 'text-statutory-emerald font-bold' : hasMarks ? 'text-amber-400 font-semibold' : 'text-slate-500'}">
+            ${isComplete ? '100% complete' : hasMarks ? `${d.total_not_marked} unmarked` : 'Empty muster'}
+          </div>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    function stepDate(offset) {
+      const curInput = document.getElementById('appAttDate');
+      const cur = curInput.value ? new Date(curInput.value) : new Date();
+      cur.setDate(cur.getDate() + offset);
+      curInput.value = cur.toISOString().slice(0, 10);
+      renderAttendanceHistoryStrip();
+      loadAppAttendance();
+    }
+
+    async function loadAppAttendance() {
+      const date = document.getElementById('appAttDate').value || todayISO();
+      const shift = document.getElementById('appAttShift').value;
+      const tbody = document.getElementById('appAttBody');
+
+      // Shimmering Skeleton Loader
+      tbody.innerHTML = `
+        <tr class="animate-pulse"><td class="p-4" colspan="5"><div class="h-6 rounded bg-surface-800 skeleton-box w-full mb-2"></div><div class="h-6 rounded bg-surface-800 skeleton-box w-3/4 mb-2"></div><div class="h-6 rounded bg-surface-800 skeleton-box w-1/2"></div></td></tr>
+      `;
+
+      try {
+        const [attRes, sumRes] = await Promise.all([
+          api(`/api/attendance?date=${date}&shift=${shift}`),
+          api(`/api/summary?date=${date}`)
+        ]);
+
+        const rows = await attRes.json();
+        const summary = await sumRes.json();
+        attRoster = rows;
+
+        // Render Summary Ribbon
+        const s = summary[shift] || { total: 0, present: 0, half: 0, absent: 0, not_marked: 0 };
+        document.getElementById('statTotal').textContent = s.total;
+        document.getElementById('statPresent').textContent = s.present;
+        document.getElementById('statHalf').textContent = s.half;
+        document.getElementById('statAbsent').textContent = s.absent;
+        document.getElementById('statPending').textContent = s.not_marked;
+
+        renderAppAttendanceTable();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-red-400 font-mono text-xs">Error loading roster: ${err.message}</td></tr>`;
+        showToast('Sync Error', 'Unable to fetch shift roster from backend: ' + err.message, 'error');
+      }
+    }
+
+    function renderAppAttendanceTable() {
+      const q = (document.getElementById('appAttSearch').value || '').toLowerCase();
+      const tbody = document.getElementById('appAttBody');
+      tbody.innerHTML = '';
+
+      const filtered = attRoster.filter(w => 
+        w.name.toLowerCase().includes(q) || w.worker_id.toLowerCase().includes(q)
+      );
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-slate-500 font-mono text-xs">No workers match the filter.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(w => {
+        const s = w.status;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-surface-850/50 transition-colors';
+        tr.innerHTML = `
+          <td class="py-3 px-4 sm:px-6">
+            <div class="font-bold text-white">${w.name}</div>
+            <div class="text-[11px] text-slate-400">Contractor: Satyendra Traders</div>
+          </td>
+          <td class="py-3 px-4 font-mono font-semibold text-brand-400 text-xs">${w.worker_id}</td>
+          <td class="py-3 px-4 font-mono text-xs text-slate-300">₹${w.daily_wage}/day</td>
+          <td class="py-3 px-4 text-xs">
+            <span class="inline-flex items-center gap-1 font-mono text-[10px] text-statutory-emerald bg-statutory-emerald/10 border border-statutory-emerald/20 px-2 py-0.5 rounded">
+              <span>●</span> ON RECORD
+            </span>
+          </td>
+          <td class="py-3 px-4 sm:px-6 text-right">
+            <div class="inline-flex rounded-xl border border-surface-borderLight bg-surface-850 p-1 text-xs font-bold shadow-sm">
+              <button onclick="markWorker('${w.worker_id}', 'P')" class="px-3 py-1.5 rounded-lg transition-all ${s === 'P' ? 'bg-statutory-emerald text-white shadow-sm' : 'text-slate-400 hover:text-white'}">
+                Present
+              </button>
+              <button onclick="markWorker('${w.worker_id}', 'H')" class="px-3 py-1.5 rounded-lg transition-all ${s === 'H' ? 'bg-statutory-amber text-white shadow-sm' : 'text-slate-400 hover:text-white'}">
+                Half
+              </button>
+              <button onclick="markWorker('${w.worker_id}', 'A')" class="px-3 py-1.5 rounded-lg transition-all ${s === 'A' ? 'bg-statutory-crimson text-white shadow-sm' : 'text-slate-400 hover:text-white'}">
+                Absent
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function markWorker(worker_id, status) {
+      const date = document.getElementById('appAttDate').value || todayISO();
+      const shift = document.getElementById('appAttShift').value;
+      const target = attRoster.find(w => w.worker_id === worker_id);
+      const newStatus = (target && target.status === status) ? null : status;
+
+      // Optimistic update
+      if (target) target.status = newStatus;
+      renderAppAttendanceTable();
+
+      try {
+        await api('/api/attendance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ worker_id, date, shift, status: newStatus, marked_by: 'Site Supervisor' })
+        });
+        loadAppAttendance(); // reconcile counts
+        loadAttendanceHistoryTimeline(); // update timeline badges
+      } catch (err) {
+        showToast('Save Failed', err.message, 'error');
+        loadAppAttendance();
+      }
+    }
+
+    // Bulk Mark
+    document.getElementById('appMarkAllPresentBtn').onclick = async () => {
+      const date = document.getElementById('appAttDate').value || todayISO();
+      const shift = document.getElementById('appAttShift').value;
+
+      try {
+        const res = await (await api('/api/attendance/mark-all', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date, shift, status: 'P', marked_by: 'Site Supervisor' })
+        })).json();
+
+        showToast('Bulk Muster Complete', `Marked ${res.marked} workers as Present for ${shift.toUpperCase()} shift`, 'success');
+        loadAppAttendance();
+        loadAttendanceHistoryTimeline();
+      } catch (err) {
+        showToast('Bulk Action Failed', err.message, 'error');
+      }
+    };
+
+    // =========================================================================
+    // 3. COMPLIANCE RADAR (PROGRESS BAR & COPY LIST)
+    // =========================================================================
+    async function loadCompliance() {
+      const tbody = document.getElementById('appCompBody');
+      tbody.innerHTML = `
+        <tr class="animate-pulse"><td class="p-4" colspan="6"><div class="h-6 rounded bg-surface-800 skeleton-box w-full mb-2"></div><div class="h-6 rounded bg-surface-800 skeleton-box w-3/4"></div></td></tr>
+      `;
+
+      try {
+        const d = await (await api('/api/compliance')).json();
+        complianceData = d;
+        const total = d.total || 1;
+        const enrolledCount = Math.max(0, d.total - d.gap_count);
+        const pct = Math.round((enrolledCount / total) * 100);
+        
+        document.getElementById('compHealthPct').textContent = `${pct}%`;
+        document.getElementById('compMissingUan').textContent = d.missing_uan;
+        document.getElementById('compMissingEsi').textContent = d.missing_esi;
+        document.getElementById('appComplianceBadge').textContent = `${d.gap_count} gaps`;
+
+        // Update Progress Bar
+        const barFill = document.getElementById('compProgressBarFill');
+        barFill.style.width = `${pct}%`;
+        barFill.className = `h-full transition-all duration-700 ${
+          pct >= 90 ? 'bg-statutory-emerald' : pct >= 60 ? 'bg-amber-500' : 'bg-red-500'
+        }`;
+        document.getElementById('compProgressBarLabel').textContent = `${enrolledCount} of ${d.total} Workers Fully Enrolled (${pct}%) &bull; ${d.gap_count} Audit Risks`;
+
+        tbody.innerHTML = '';
+
+        if (!d.workers.length) {
+          tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-statutory-emerald font-mono text-xs">✓ Zero compliance deficiencies found! All workers fully enrolled.</td></tr>`;
+          return;
+        }
+
+        d.workers.forEach(w => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-surface-850/50 transition-colors';
+          tr.innerHTML = `
+            <td class="py-3 px-6 font-bold text-white">${w.name}</td>
+            <td class="py-3 px-4 font-mono text-xs text-brand-400">${w.worker_id}</td>
+            <td class="py-3 px-4 uppercase font-mono text-xs text-slate-300">${w.default_shift}</td>
+            <td class="py-3 px-4 text-xs font-mono">
+              ${w.uan ? `<span class="text-slate-300">${w.uan}</span>` : `<span class="text-red-400 bg-red-500/15 px-2 py-0.5 rounded border border-red-500/30 font-bold">MISSING UAN</span>`}
+            </td>
+            <td class="py-3 px-4 text-xs font-mono">
+              ${w.esi_ip ? `<span class="text-slate-300">${w.esi_ip}</span>` : `<span class="text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30 font-bold">MISSING ESI</span>`}
+            </td>
+            <td class="py-3 px-6 text-right">
+              <button onclick='openWorkerModal(${JSON.stringify(w)})' class="px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white shadow-sm">
+                Resolve Gap &rarr;
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-red-400 font-mono text-xs">Error: ${err.message}</td></tr>`;
+        showToast('Compliance Error', err.message, 'error');
+      }
+    }
+
+    function copyCompliancePendingList() {
+      if (!complianceData || !complianceData.workers || !complianceData.workers.length) {
+        showToast('No Gaps Found', 'All workers are fully enrolled with PF and ESI!', 'info');
+        return;
+      }
+
+      const today = todayISO();
+      let text = `MUSTER — PENDING STATUTORY ENROLMENT LIST\n`;
+      text += `Site: Tata Steel Jamshedpur Works\n`;
+      text += `Total Deficiencies: ${complianceData.workers.length} workers\n`;
+      text += `Generated: ${today}\n`;
+      text += `--------------------------------------------------------\n\n`;
+
+      complianceData.workers.forEach((w, i) => {
+        const missing = [];
+        if (!w.uan) missing.push('PF UAN');
+        if (!w.esi_ip) missing.push('ESI IP');
+        text += `${i + 1}. [${w.worker_id}] ${w.name} | Shift: ${w.default_shift.toUpperCase()} | Missing: ${missing.join(' & ')}\n`;
+      });
+
+      text += `\nPlease update statutory records to prevent EPF Section 14B / ESIC Section 85 penalties.`;
+
+      // Copy to clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('Copied to Clipboard', `Copied ${complianceData.workers.length} pending worker records for your consultant.`, 'success');
+        }).catch(() => fallbackCopyText(text));
+      } else {
+        fallbackCopyText(text);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const area = document.createElement('textarea');
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand('copy');
+      document.body.removeChild(area);
+      showToast('Copied to Clipboard', `Copied ${complianceData.workers.length} records.`, 'success');
+    }
+
+    // =========================================================================
+    // 4. WORKER DIRECTORY (SEARCH & MULTI-FIELD SORT)
+    // =========================================================================
+    async function loadWorkers() {
+      const shift = document.getElementById('appWorkerShiftFilter').value;
+      const q = document.getElementById('appWorkerSearch').value;
+      const tbody = document.getElementById('appWorkerBody');
+
+      tbody.innerHTML = `
+        <tr class="animate-pulse"><td class="p-4" colspan="7"><div class="h-6 rounded bg-surface-800 skeleton-box w-full mb-2"></div><div class="h-6 rounded bg-surface-800 skeleton-box w-2/3"></div></td></tr>
+      `;
+
+      try {
+        const rows = await (await api(`/api/workers?shift=${shift}&q=${encodeURIComponent(q)}`)).json();
+        workersList = rows;
+        renderWorkerDirectoryTable();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-red-400 font-mono text-xs">Error: ${err.message}</td></tr>`;
+        showToast('Error', err.message, 'error');
+      }
+    }
+
+    function renderWorkerDirectoryTable() {
+      const tbody = document.getElementById('appWorkerBody');
+      tbody.innerHTML = '';
+
+      if (!workersList.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-slate-500 font-mono text-xs">No workers found in roster.</td></tr>`;
+        return;
+      }
+
+      // Sort
+      const sortMode = document.getElementById('appWorkerSort').value;
+      const sorted = [...workersList].sort((a, b) => {
+        if (sortMode === 'name_asc') return a.name.localeCompare(b.name);
+        if (sortMode === 'name_desc') return b.name.localeCompare(a.name);
+        if (sortMode === 'wid_asc') return a.worker_id.localeCompare(b.worker_id);
+        if (sortMode === 'wid_desc') return b.worker_id.localeCompare(a.worker_id);
+        if (sortMode === 'wage_desc') return (b.daily_wage || 0) - (a.daily_wage || 0);
+        if (sortMode === 'wage_asc') return (a.daily_wage || 0) - (b.daily_wage || 0);
+        return 0;
+      });
+
+      sorted.forEach(w => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-surface-850/50 transition-colors';
+        tr.innerHTML = `
+          <td class="py-3 px-6">
+            <div class="font-bold text-white">${w.name}</div>
+            <div class="text-[11px] font-mono text-slate-400">${w.phone || 'No phone'}</div>
+          </td>
+          <td class="py-3 px-4 font-mono text-xs text-brand-400">${w.worker_id}</td>
+          <td class="py-3 px-4 uppercase font-mono text-xs text-slate-300">${w.default_shift}</td>
+          <td class="py-3 px-4 font-mono text-xs text-white">₹${w.daily_wage}</td>
+          <td class="py-3 px-4 font-mono text-xs">
+            ${w.uan ? `<span class="text-statutory-emerald">${w.uan}</span>` : `<span class="text-red-400">Pending</span>`}
+          </td>
+          <td class="py-3 px-4 font-mono text-xs">
+            ${w.esi_ip ? `<span class="text-statutory-emerald">${w.esi_ip}</span>` : `<span class="text-amber-400">Pending</span>`}
+          </td>
+          <td class="py-3 px-6 text-right">
+            <button onclick='openWorkerModal(${JSON.stringify(w)})' class="px-3 py-1 rounded-lg text-xs font-semibold bg-surface-800 hover:bg-surface-750 text-slate-300 border border-surface-border">
+              Edit
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function cycleSort(field) {
+      const select = document.getElementById('appWorkerSort');
+      if (field === 'name') {
+        select.value = select.value === 'name_asc' ? 'name_desc' : 'name_asc';
+      } else if (field === 'wid') {
+        select.value = select.value === 'wid_asc' ? 'wid_desc' : 'wid_asc';
+      } else if (field === 'wage') {
+        select.value = select.value === 'wage_desc' ? 'wage_asc' : 'wage_desc';
+      }
+      renderWorkerDirectoryTable();
+    }
+
+    // Worker Modal
+    function openWorkerModal(w) {
+      const modal = document.getElementById('workerModal');
+      const isEdit = !!w;
+      document.getElementById('workerModalTitle').textContent = isEdit ? `Edit Worker (${w.worker_id})` : 'Add New Worker';
+      document.getElementById('modalEditId').value = isEdit ? w.worker_id : '';
+      document.getElementById('modalWid').value = isEdit ? w.worker_id : '';
+      document.getElementById('modalWid').disabled = isEdit;
+      document.getElementById('modalName').value = isEdit ? w.name : '';
+      document.getElementById('modalPhone').value = isEdit ? (w.phone || '') : '';
+      document.getElementById('modalWage').value = isEdit ? w.daily_wage : 600;
+      document.getElementById('modalShift').value = isEdit ? w.default_shift : 'day';
+      document.getElementById('modalUan').value = isEdit ? (w.uan || '') : '';
+      document.getElementById('modalEsi').value = isEdit ? (w.esi_ip || '') : '';
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeWorkerModal() {
+      const modal = document.getElementById('workerModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function saveWorker(e) {
+      e.preventDefault();
+      const editId = document.getElementById('modalEditId').value;
+      const wid = document.getElementById('modalWid').value.trim();
+      const name = document.getElementById('modalName').value.trim();
+      const phone = document.getElementById('modalPhone').value.trim() || null;
+      const daily_wage = Number(document.getElementById('modalWage').value) || 0;
+      const default_shift = document.getElementById('modalShift').value;
+      const uan = document.getElementById('modalUan').value.trim() || null;
+      const esi_ip = document.getElementById('modalEsi').value.trim() || null;
+
+      const payload = { name, phone, daily_wage, default_shift, uan, esi_ip };
+
+      try {
+        if (editId) {
+          await api(`/api/workers/${editId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          showToast('Updated', `Worker ${editId} successfully updated`, 'success');
+        } else {
+          payload.worker_id = wid;
+          await api('/api/workers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          showToast('Added', `Worker ${wid} added to roster`, 'success');
+        }
+
+        closeWorkerModal();
+        checkBackend();
+        if (currentAppTab === 'dashboard') loadDashboard();
+        if (currentAppTab === 'attendance') loadAppAttendance();
+        if (currentAppTab === 'compliance') loadCompliance();
+        if (currentAppTab === 'workers') loadWorkers();
+      } catch (err) {
+        showToast('Save Failed', err.message, 'error');
+      }
+    }
+
+    // =========================================================================
+    // EXPORT & IMPORT
+    // =========================================================================
+    function triggerExport() {
+      const month = document.getElementById('appExportMonth').value;
+      if (!month) {
+        showToast('Month Required', 'Please select a billing month', 'error');
+        return;
+      }
+      window.open(`/api/export?month=${month}`, '_blank');
+      showToast('Export Triggered', `Downloading Form T Muster CSV for ${month}`, 'success');
+    }
+
+    function openImportModal() {
+      document.getElementById('importModal').classList.remove('hidden');
+      document.getElementById('importModal').classList.add('flex');
+    }
+
+    function closeImportModal() {
+      document.getElementById('importModal').classList.add('hidden');
+      document.getElementById('importModal').classList.remove('flex');
+    }
+
+    function loadSampleImport() {
+      const sample = [
+        { name: "Birsa Munda", phone: "9835100001", daily_wage: 650, default_shift: "day", uan: "100230009901", esi_ip: "3100509901" },
+        { name: "Charan Murmu", phone: "9835100002", daily_wage: 590, default_shift: "night", uan: "100230009902", esi_ip: "3100509902" }
+      ];
+      document.getElementById('importPayload').value = JSON.stringify(sample, null, 2);
+    }
+
+    async function executeImport() {
+      const raw = document.getElementById('importPayload').value.trim();
+      try {
+        const rows = JSON.parse(raw);
+        const res = await (await api('/api/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rows })
+        })).json();
+
+        showToast('Import Complete', `Added ${res.added} workers, skipped ${res.skipped}`, 'success');
+        closeImportModal();
+        checkBackend();
+        loadWorkers();
+      } catch (err) {
+        showToast('Import Error', 'Invalid JSON payload or server error: ' + err.message, 'error');
+      }
+    }
+
+    // =========================================================================
+    // DEMO MODAL
+    // =========================================================================
+    function openDemoModal(planName = 'General') {
+      const modal = document.getElementById('demoModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDemoModal() {
+      const modal = document.getElementById('demoModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitDemoLead(e) {
+      e.preventDefault();
+      const name = document.getElementById('demoName').value;
+      const comp = document.getElementById('demoCompany').value;
+      const phone = document.getElementById('demoPhone').value;
+      closeDemoModal();
+      showToast('Demo Confirmed', `Thank you ${name}! Our senior site engineer will contact you on ${phone} within 2 hours.`, 'success');
+    }
+
+    function setTodayDate() {
+      document.getElementById('appAttDate').value = todayISO();
+      renderAttendanceHistoryStrip();
+      loadAppAttendance();
+    }
+
+    // Event Listeners
+    document.getElementById('appAttDate').onchange = () => {
+      renderAttendanceHistoryStrip();
+      loadAppAttendance();
+    };
+    document.getElementById('appAttShift').onchange = loadAppAttendance;
+    document.getElementById('appAttSearch').oninput = renderAppAttendanceTable;
+    document.getElementById('appWorkerSearch').oninput = loadWorkers;
+    document.getElementById('appWorkerShiftFilter').onchange = loadWorkers;
+
+    // Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('appAttDate').value = todayISO();
+      document.getElementById('appExportMonth').value = todayISO().slice(0, 7);
+      
+      checkBackend();
+      renderHeroSimulator();
+      updateCalculator(300);
+
+      // Check URL hash for direct /#app routing
+      if (window.location.hash === '#app') {
+        switchView('app', 'dashboard');
+      }
+
+      // Refresh backend status every 15s
+      setInterval(checkBackend, 15000);
+    });
+  </script>
+</body>
+</html>
